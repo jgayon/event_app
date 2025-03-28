@@ -1,17 +1,14 @@
+import 'package:event_app/pages/event_details_page.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../controllers/event_controller.dart';
+import '../controllers/event_model.dart';
 
-import 'all_events.dart';
-import 'my_events.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  HomePage({super.key});
 
-  final List<Map<String, String>> dummyEvents = const [
-    {'title': 'Flutter Basics', 'location': 'Room A', 'date': 'Mar 26, 10:00 AM'},
-    {'title': 'Dart Deep Dive', 'location': 'Room B', 'date': 'Mar 26, 1:00 PM'},
-    {'title': 'State Management', 'location': 'Room C', 'date': 'Mar 27, 9:00 AM'},
-    {'title': 'AI in Flutter', 'location': 'Room D', 'date': 'Mar 27, 3:00 PM'},
-  ];
+  final EventController eventController = Get.find<EventController>();
 
   @override
   Widget build(BuildContext context) {
@@ -21,48 +18,85 @@ class HomePage extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Eventos Destacados',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView.builder(
-                itemCount: dummyEvents.length,
-                itemBuilder: (context, index) {
-                  final event = dummyEvents[index];
-                  return Card(
-                    elevation: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    child: ListTile(
-                      title: Text(event['title']!),
-                      subtitle: Text('${event['location']} • ${event['date']}'),
-                      leading: const Icon(Icons.event),
-                    ),
-                  );
-                },
+        child: Obx(() {
+          final allEvents = eventController.allEvents;
+          final subscribed = eventController.subscribedEvents;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Eventos Cercanos',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 150,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: allEvents.length,
+                  itemBuilder: (context, index) {
+                    final event = allEvents[index];
+                    return _eventCard(event);
+                  },
+                ),
+              ),
+              const SizedBox(height: 25),
+              const Text(
+                'Eventos Cercanos Inscritos',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 150,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: subscribed.length,
+                  itemBuilder: (context, index) {
+                    final event = subscribed[index];
+                    return _eventCard(event, isSubscribed: true);
+                  },
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _eventCard(Event event, {bool isSubscribed = false}) {
+    return GestureDetector(
+      onTap: () {
+        Get.to(() => EventDetailsPage(event: event));
+      },
+      child: Container(
+        width: 250,
+        margin: const EdgeInsets.only(right: 12),
+        child: Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          color: isSubscribed ? Colors.green[50] : Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.title,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(event.location),
+                const SizedBox(height: 4),
+                Text(
+                  '${event.dateTime.day}/${event.dateTime.month} - ${event.dateTime.hour}:${event.dateTime.minute.toString().padLeft(2, '0')}',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const AllEventsPage()));
-              },
-              style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(45)),
-              child: const Text('Todos los Eventos'),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyEventsPage()));
-              },
-              style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(45)),
-              child: const Text('Mis Eventos'),
-            ),
-          ],
+          ),
         ),
       ),
     );
